@@ -1,0 +1,249 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Core user model - synced with Kinde Auth
+model User {
+  id          String   @id @default(cuid()) // Using CUID for better performance
+  kindeId     String   @unique              // Kinde user ID for sync
+  email       String   @unique
+  name        String?
+  avatar      String?                       // Profile picture URL
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  profile     Profile?
+  interests   Interest[]
+  sentInterests     InterestSent[]   @relation("InterestSender")
+  receivedInterests InterestSent[]   @relation("InterestReceiver")
+  payments    Payment[]
+  
+  @@map("users")
+}
+
+// Detailed profile information
+model Profile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Basic Info
+  firstName         String?
+  lastName          String?
+  dateOfBirth       DateTime?
+  gender            Gender?
+  height            Int?                    // Height in cm
+  weight            Int?                    // Weight in kg
+  
+  // Contact & Location
+  phone             String?
+  city              String?
+  state             String?
+  country           String?
+  
+  // Education & Career
+  education         String?
+  occupation        String?
+  income            String?
+  company           String?
+  
+  // Family Info
+  fatherName        String?
+  motherName        String?
+  siblings          Int?
+  familyType        FamilyType?
+  familyIncome      String?
+  
+  // Personal Details
+  maritalStatus     MaritalStatus?
+  religion          Religion?
+  caste             String?
+  subcaste          String?
+  motherTongue      String?
+  languages         String[]              // Array of languages spoken
+  
+  // Physical Attributes
+  complexion        Complexion?
+  bodyType          BodyType?
+  disabilities      String?
+  
+  // Lifestyle
+  diet              Diet?
+  smoking           SmokingHabit?
+  drinking          DrinkingHabit?
+  
+  // Partner Preferences
+  partnerAgeMin     Int?
+  partnerAgeMax     Int?
+  partnerHeightMin  Int?
+  partnerHeightMax  Int?
+  partnerEducation  String?
+  partnerOccupation String?
+  partnerIncome     String?
+  partnerLocation   String[]
+  
+  // Documents & Media
+  photos            String[]              // Array of photo URLs
+  biodataPdf        String?               // Biodata PDF URL
+  
+  // Profile Status
+  isComplete        Boolean  @default(false)
+  isVerified        Boolean  @default(false)
+  isVisible         Boolean  @default(true)
+  
+  // SEO and Matching
+  bio               String?               // Short bio/description
+  hobbies           String[]              // Array of hobbies
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@map("profiles")
+}
+
+// Interest system for connecting users
+model Interest {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  category  String?                       // e.g., "sports", "arts", "music"
+  
+  users     User[]
+  
+  createdAt DateTime @default(now())
+  
+  @@map("interests")
+}
+
+// When someone sends interest to another user
+model InterestSent {
+  id          String        @id @default(cuid())
+  senderId    String
+  receiverId  String
+  sender      User          @relation("InterestSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver    User          @relation("InterestReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  
+  status      InterestStatus @default(PENDING)
+  message     String?                     // Optional message with interest
+  
+  sentAt      DateTime      @default(now())
+  respondedAt DateTime?
+  
+  @@unique([senderId, receiverId])        // Prevent duplicate interests
+  @@map("interests_sent")
+}
+
+// Payment tracking for premium features
+model Payment {
+  id              String        @id @default(cuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  razorpayOrderId String        @unique
+  razorpayPaymentId String?     @unique
+  
+  amount          Int                     // Amount in paise (smallest currency unit)
+  currency        String        @default("INR")
+  status          PaymentStatus @default(PENDING)
+  
+  planType        PlanType
+  validUntil      DateTime?               // When the plan expires
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  @@map("payments")
+}
+
+// Enums for type safety
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum FamilyType {
+  NUCLEAR
+  JOINT
+  OTHER
+}
+
+enum MaritalStatus {
+  NEVER_MARRIED
+  DIVORCED
+  WIDOWED
+  SEPARATED
+}
+
+enum Religion {
+  HINDU
+  MUSLIM
+  CHRISTIAN
+  SIKH
+  BUDDHIST
+  JAIN
+  OTHER
+}
+
+enum Complexion {
+  VERY_FAIR
+  FAIR
+  WHEATISH
+  DARK
+  VERY_DARK
+}
+
+enum BodyType {
+  SLIM
+  AVERAGE
+  ATHLETIC
+  HEAVY
+}
+
+enum Diet {
+  VEGETARIAN
+  NON_VEGETARIAN
+  VEGAN
+  JAIN_VEGETARIAN
+}
+
+enum SmokingHabit {
+  NEVER
+  OCCASIONALLY
+  REGULARLY
+}
+
+enum DrinkingHabit {
+  NEVER
+  OCCASIONALLY
+  REGULARLY
+}
+
+enum InterestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum PlanType {
+  BASIC
+  PREMIUM
+  GOLD
+}
