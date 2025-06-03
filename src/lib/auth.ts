@@ -1,7 +1,7 @@
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { db } from "./db";
 import type { KindeUser } from "@kinde-oss/kinde-auth-nextjs/types";
-import { resolve } from "path";
+import { cache } from 'react';  // ADD THIS IMPORT
 
 /**
  * Get the current authenticated user from Kinde
@@ -27,40 +27,41 @@ export async function getCurrentUser() {
  * We call this whenever a user logs in to ensure our DB is up-to-date
  */
 export async function syncUserToDatabase(kindeUser: KindeUser<Record<string, any>>) {
-    const userData = {
-      email: kindeUser.email!,
-      name: `${kindeUser.given_name || ''} ${kindeUser.family_name || ''}`.trim() || null,
-      avatar: kindeUser.picture || null,
-    };
-
   try {
-
-    const user = await db.user.upsert({
+    // Check if user already exists
+    const existingUser = await db.user.findUnique({
       where: { kindeId: kindeUser.id },
-      update: userData,
-      create: {
-        kindeId: kindeUser.id,
-        ...userData,
-      },
       include: { profile: true }
     });
 
-    return user;
-  } catch (error: any) {
-    if (error.code === 'P2002') {
-      // Retry once - the record now exists, so upsert will update
-      await new Promise(resolve=> setTimeout(resolve, 50))
-      return await db.user.upsert({
+    if (existingUser) {
+      // Update existing user with latest data from Kinde
+      const updatedUser = await db.user.update({
         where: { kindeId: kindeUser.id },
-        update: userData,
-        create: {
-          kindeId: kindeUser.id,
-          ...userData,
+        data: {
+          email: kindeUser.email!,
+          name: `${kindeUser.given_name || ''} ${kindeUser.family_name || ''}`.trim() || null,
+          avatar: kindeUser.picture || null,
         },
         include: { profile: true }
       });
+      
+      return updatedUser;
+    } else {
+      // Create new user
+      const newUser = await db.user.create({
+        data: {
+          kindeId: kindeUser.id,
+          email: kindeUser.email!,
+          name: `${kindeUser.given_name || ''} ${kindeUser.family_name || ''}`.trim() || null,
+          avatar: kindeUser.picture || null,
+        },
+        include: { profile: true }
+      });
+      
+      return newUser;
     }
-    
+  } catch (error) {
     console.error("Error syncing user to database:", error);
     throw new Error("Failed to sync user");
   }
@@ -69,8 +70,10 @@ export async function syncUserToDatabase(kindeUser: KindeUser<Record<string, any
 /**
  * Get the current user from our database (not Kinde)
  * This gives us access to our custom fields like profile, interests, etc.
+ * 
+ * CACHED VERSION - prevents duplicate database queries
  */
-export async function getCurrentUserFromDB() {
+export const getCurrentUserFromDB = cache(async () => {  // CHANGED: cache wrapper
   const kindeUser = await getCurrentUser();
   
   if (!kindeUser) {
@@ -79,7 +82,7 @@ export async function getCurrentUserFromDB() {
   
   // Sync user to our DB and return the DB record
   return await syncUserToDatabase(kindeUser);
-}
+});  // CHANGED: closing syntax
 
 /**
  * Check if current user has completed their profile
@@ -102,4 +105,5 @@ export type UserWithProfile = Awaited<ReturnType<typeof getCurrentUserFromDB>>;
  * 2. Our DB stores additional user data (profiles, interests, payments)
  * 3. We sync on every login to keep data fresh
  * 4. This gives us the best of both worlds - robust auth + custom data
+ * 5. CACHE prevents duplicate queries within the same request
  */
