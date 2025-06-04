@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { getCurrentUser } from '@/lib/auth'
 import { redirect } from 'next/navigation'
+import { LoginLink, LogoutLink, RegisterLink } from "@kinde-oss/kinde-auth-nextjs/components"
+
 
 /**
  * Landing Page - Marketing site for non-authenticated users
@@ -11,7 +13,7 @@ import { redirect } from 'next/navigation'
 export default async function HomePage() {
   // Check if user is already authenticated
   const user = await getCurrentUser();
-  
+
   // If authenticated, redirect to dashboard
   if (user) {
     redirect('/dashboard');
@@ -29,18 +31,24 @@ export default async function HomePage() {
               </h1>
             </div>
             <div className="flex items-center space-x-4">
-              <Link
+              {/* <Link
                 href="/api/auth/login"
                 className="text-gray-600 hover:text-gray-900 transition-colors"
               >
                 Login
-              </Link>
-              <Link
+              </Link> */}
+              <LoginLink className="text-gray-600 hover:text-gray-900 transition-colors">
+                Login
+              </LoginLink>
+              {/* <Link
                 href="/api/auth/register"
                 className="bg-rose-600 text-white px-6 py-2 rounded-lg hover:bg-rose-700 transition-colors"
               >
                 Get Started
-              </Link>
+              </Link> */}
+              <RegisterLink className="bg-rose-600 text-white px-6 py-2 rounded-lg hover:bg-rose-700 transition-colors">
+                Get Started
+              </RegisterLink>
             </div>
           </div>
         </div>
@@ -54,10 +62,10 @@ export default async function HomePage() {
             <span className="text-rose-600 block">Perfect Match</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Join thousands of people finding meaningful relationships. 
+            Join thousands of people finding meaningful relationships.
             Create your profile, browse matches, and connect with your soulmate.
           </p>
-          
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/api/auth/register"

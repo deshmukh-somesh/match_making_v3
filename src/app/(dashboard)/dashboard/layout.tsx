@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { getCurrentUserFromDB } from '@/lib/auth'
 import { redirect } from 'next/navigation'
+import { LogoutLink } from '@kinde-oss/kinde-auth-nextjs/components';
 
 /**
  * Dashboard Layout - For authenticated users
@@ -18,7 +19,7 @@ export default async function DashboardLayout({
 }) {
   // Get user from our database (this also syncs from Kinde)
   const user = await getCurrentUserFromDB();
-  
+
   // If not authenticated, redirect to login
   if (!user) {
     redirect('/login');
@@ -92,12 +93,17 @@ export default async function DashboardLayout({
               </div>
 
               {/* Logout */}
-              <Link
+              {/* this is causing cors issue */}
+              {/* <Link
                 href="/api/auth/logout"
                 className="text-gray-600 hover:text-gray-900 transition-colors"
               >
                 Logout
-              </Link>
+              </Link> */}
+              
+              <LogoutLink className="text-gray-600 hover:text-gray-900 transition-colors">
+                Logout
+              </LogoutLink>
             </div>
           </div>
         </div>

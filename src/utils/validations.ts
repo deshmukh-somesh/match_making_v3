@@ -142,3 +142,27 @@ export const CompleteProfileSchema = BasicInfoSchema
     message: "Maximum height must be greater than or equal to minimum height",
     path: ["partnerHeightMax"]
   })
+
+
+  // Type inference for TypeScript : 
+  export type BasicInfoFormData = z.infer<typeof BasicInfoSchema>
+  export type LocationContactFormData = z.infer<typeof LocationContactSchema>
+  export type EducationCareerFormData = z.infer<typeof EducationCareerSchema>
+  export type FamilyInfoFormData = z.infer<typeof FamilyInfoSchema>
+  export type ReligionCultureFormData = z.infer<typeof ReligionCultureSchema>
+  export type LifestyleFormData = z.infer<typeof LifestyleSchema>
+  export type PartnerPreferencesFromData = z.infer<typeof PartnerPreferencesSchema>
+  export type CompleteProfileFormData = z.infer<typeof CompleteProfileSchema>
+
+
+  
+/**
+ * Why this validation approach?
+ * 
+ * 1. **Tab-based schemas**: Each tab has its own schema for progressive validation
+ * 2. **Type safety**: Zod schemas generate TypeScript types automatically
+ * 3. **Prisma alignment**: Enums match exactly with our database schema
+ * 4. **User-friendly errors**: Custom error messages for better UX
+ * 5. **Cross-field validation**: Age ranges, height ranges must be logical
+ * 6. **Optional by default**: Users can save partial profiles (MVP approach)
+ */
