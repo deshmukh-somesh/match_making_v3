@@ -19,10 +19,10 @@ export const SmokingHabitSchema = z.enum(['NEVER', 'OCCASIONALLY', 'REGULARLY'])
 export const DrinkingHabitSchema = z.enum(['NEVER', 'OCCASIONALLY', 'REGULARLY'])
 
 // Helper functions for validation
-const createOptionalString = (min = 1, max = 100) => 
+const createOptionalString = (min = 1, max = 100) =>
   z.string().min(min, `Must be at least ${min} characters`).max(max, `Must be less than ${max} characters`).optional().or(z.literal(''))
 
-const createOptionalNumber = (min = 1, max = 999) => 
+const createOptionalNumber = (min = 1, max = 999) =>
   z.number().min(min, `Must be at least ${min}`).max(max, `Must be less than ${max}`).optional()
 
 // Tab 1: Basic Information
@@ -114,6 +114,17 @@ export const PartnerPreferencesSchema = z.object({
   partnerLocation: z.array(z.string()).optional(),
 })
 
+
+// Add this lne after your CompleteProfileSchema: 
+export const UpdateProfileSchema = BasicInfoSchema
+  .merge(LocationContactSchema)
+  .merge(EducationCareerSchema)
+  .merge(FamilyInfoSchema)
+  .merge(ReligionCultureSchema)
+  .merge(LifestyleSchema)
+  .merge(PartnerPreferencesSchema)
+  .partial(); // This works because there are no .refine()  calles yet
+
 // Complete profile schema with ALL refines at the end
 export const CompleteProfileSchema = BasicInfoSchema
   .merge(LocationContactSchema)
@@ -144,18 +155,30 @@ export const CompleteProfileSchema = BasicInfoSchema
   })
 
 
-  // Type inference for TypeScript : 
-  export type BasicInfoFormData = z.infer<typeof BasicInfoSchema>
-  export type LocationContactFormData = z.infer<typeof LocationContactSchema>
-  export type EducationCareerFormData = z.infer<typeof EducationCareerSchema>
-  export type FamilyInfoFormData = z.infer<typeof FamilyInfoSchema>
-  export type ReligionCultureFormData = z.infer<typeof ReligionCultureSchema>
-  export type LifestyleFormData = z.infer<typeof LifestyleSchema>
-  export type PartnerPreferencesFromData = z.infer<typeof PartnerPreferencesSchema>
-  export type CompleteProfileFormData = z.infer<typeof CompleteProfileSchema>
+
+// TabsaveInput: 
+export const TabSaveInput = z.object({
+  tabData: z.record(z.any()),
+  tabName: z.string()
+})
 
 
-  
+
+// Type inference for TypeScript : 
+export type BasicInfoFormData = z.infer<typeof BasicInfoSchema>
+export type LocationContactFormData = z.infer<typeof LocationContactSchema>
+export type EducationCareerFormData = z.infer<typeof EducationCareerSchema>
+export type FamilyInfoFormData = z.infer<typeof FamilyInfoSchema>
+export type ReligionCultureFormData = z.infer<typeof ReligionCultureSchema>
+export type LifestyleFormData = z.infer<typeof LifestyleSchema>
+export type PartnerPreferencesFromData = z.infer<typeof PartnerPreferencesSchema>
+export type CompleteProfileFormData = z.infer<typeof CompleteProfileSchema>
+// Add this type : 
+export type UpdateProfileFormData = z.infer<typeof UpdateProfileSchema>;
+// exporting the tabsaveinput: 
+export type TabSaveInputType = z.infer<typeof TabSaveInput>;
+
+
 /**
  * Why this validation approach?
  * 
