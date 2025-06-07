@@ -8,11 +8,11 @@ import { cache } from 'react';  // ADD THIS IMPORT
  */
 export async function getCurrentUser() {
   const { getUser, isAuthenticated } = getKindeServerSession();
-  
+
   if (!(await isAuthenticated())) {
     return null;
   }
-  
+
   return await getUser();
 }
 
@@ -45,7 +45,7 @@ export async function syncUserToDatabase(kindeUser: KindeUser<Record<string, any
         },
         include: { profile: true }
       });
-      
+
       return updatedUser;
     } else {
       // Create new user
@@ -58,7 +58,7 @@ export async function syncUserToDatabase(kindeUser: KindeUser<Record<string, any
         },
         include: { profile: true }
       });
-      
+
       return newUser;
     }
   } catch (error) {
@@ -75,11 +75,11 @@ export async function syncUserToDatabase(kindeUser: KindeUser<Record<string, any
  */
 export const getCurrentUserFromDB = cache(async () => {  // CHANGED: cache wrapper
   const kindeUser = await getCurrentUser();
-  
+
   if (!kindeUser) {
     return null;
   }
-  
+
   // Sync user to our DB and return the DB record
   return await syncUserToDatabase(kindeUser);
 });  // CHANGED: closing syntax
